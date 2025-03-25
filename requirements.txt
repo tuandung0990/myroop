@@ -19,7 +19,7 @@ torchvision==0.15.2+cu118; sys_platform != 'darwin'
 torchvision==0.15.2; sys_platform == 'darwin'
 
 # ONNX Runtime với GPU
-onnxruntime-gpu==1.14.0; sys_platform != 'darwin'
+onnxruntime-gpu==1.15.0; sys_platform != 'darwin'
 onnxruntime-silicon==1.13.1; sys_platform == 'darwin' and platform_machine == 'arm64'
 
 # TensorFlow (tùy vào hệ điều hành)
