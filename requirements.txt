@@ -1,33 +1,24 @@
---extra-index-url https://download.pytorch.org/whl/cu118
-
-# Cập nhật numpy và typing-extensions
+# Thư viện nền
 numpy>=1.25.0
 typing-extensions>=4.10.0
 
-# Các thư viện khác
+# Xử lý ảnh và mô hình
 opencv-python==4.7.0.72
-onnx==1.14.0
-insightface==0.7.3
-psutil==5.9.5
-tk==0.1.0
-customtkinter==5.1.3
 pillow==9.5.0
-
-# PyTorch và các thư viện CUDA
-torch==2.0.1+cu118; sys_platform != 'darwin'
-torch==2.0.1; sys_platform == 'darwin'
-torchvision==0.15.2+cu118; sys_platform != 'darwin'
-torchvision==0.15.2; sys_platform == 'darwin'
-
-# ONNX Runtime với GPU
-onnxruntime-gpu==1.15.0; sys_platform != 'darwin'
-onnxruntime-silicon==1.13.1; sys_platform == 'darwin' and platform_machine == 'arm64'
-
-# TensorFlow 2.18.0
-tensorflow==2.18.0; sys_platform != 'darwin'
-
-# Các thư viện bổ sung khác
-opennsfw2==0.10.2
-protobuf>=4.25.2
 tqdm==4.65.0
+psutil==5.9.5
+protobuf>=4.25.2
+
+# Face Swap & Enhancement
+insightface==0.7.3
 gfpgan==1.3.8
+onnx==1.14.0
+onnxruntime-gpu==1.15.0
+opennsfw2==0.10.2  # Nếu bạn cần lọc nội dung NSFW, giữ lại. Nếu không cần thì có thể xoá.
+
+# PyTorch (dùng bản sẵn có trên Colab - không cần +cu118)
+torch==2.0.1
+torchvision==0.15.2
+
+# TensorFlow (Colab đã cài sẵn phiên bản phù hợp, chỉ thêm nếu cần cụ thể)
+tensorflow==2.18.0
