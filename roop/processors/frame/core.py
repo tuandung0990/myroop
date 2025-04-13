@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from types import ModuleType
 from typing import Any, List, Callable
 from tqdm import tqdm
+import torch  # Đảm bảo sử dụng GPU nếu có
 
 import roop
 
@@ -16,17 +17,15 @@ FRAME_PROCESSORS_INTERFACE = [
     'process_video'
 ]
 
-
 def load_frame_processor_module(frame_processor: str) -> Any:
     try:
         frame_processor_module = importlib.import_module(f'roop.processors.frame.{frame_processor}')
         for method_name in FRAME_PROCESSORS_INTERFACE:
             if not hasattr(frame_processor_module, method_name):
-                sys.exit()
+                sys.exit(f"Error: Missing {method_name} in {frame_processor}")
     except ImportError:
-        sys.exit()
+        sys.exit(f"Error: Could not import module {frame_processor}")
     return frame_processor_module
-
 
 def get_frame_processors_modules(frame_processors: List[str]) -> List[ModuleType]:
     global FRAME_PROCESSORS_MODULES
@@ -37,7 +36,6 @@ def get_frame_processors_modules(frame_processors: List[str]) -> List[ModuleType
             FRAME_PROCESSORS_MODULES.append(frame_processor_module)
     return FRAME_PROCESSORS_MODULES
 
-
 def multi_process_frame(source_path: str, temp_frame_paths: List[str], process_frames: Callable[[str, List[str], Any], None], progress: Any = None) -> None:
     with ThreadPoolExecutor(max_workers=roop.globals.execution_threads) as executor:
         futures = []
@@ -46,7 +44,6 @@ def multi_process_frame(source_path: str, temp_frame_paths: List[str], process_f
             futures.append(future)
         for future in futures:
             future.result()
-
 
 def process_video(source_path: str, frame_paths: list[str], process_frames: Callable[[str, List[str], Any], None]) -> None:
     progress_bar_format = '{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]'
