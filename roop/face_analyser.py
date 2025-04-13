@@ -1,6 +1,5 @@
-from typing import Any
+rom typing import Any
 import insightface
-
 import roop.globals
 from roop.typing import Frame
 
@@ -12,7 +11,9 @@ def get_face_analyser() -> Any:
 
     if FACE_ANALYSER is None:
         FACE_ANALYSER = insightface.app.FaceAnalysis(name='buffalo_l', providers=roop.globals.execution_providers)
-        FACE_ANALYSER.prepare(ctx_id=0, det_size=(640, 640))
+        # Kiểm tra xem có GPU không, nếu có, sử dụng GPU (Colab sẽ tự động sử dụng GPU nếu có)
+        ctx_id = 0 if roop.globals.execution_providers and 'cuda' in roop.globals.execution_providers else -1
+        FACE_ANALYSER.prepare(ctx_id=ctx_id, det_size=(640, 640))
     return FACE_ANALYSER
 
 
