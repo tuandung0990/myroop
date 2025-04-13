@@ -1,7 +1,8 @@
 from typing import Any, List
 import cv2
 import insightface
-import threading
+from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
 
 import roop.globals
 import roop.processors.frame.core
@@ -11,15 +12,12 @@ from roop.typing import Face, Frame
 from roop.utilities import conditional_download, resolve_relative_path, is_image, is_video
 
 FACE_SWAPPER = None
-THREAD_LOCK = threading.Lock()
 NAME = 'ROOP.FACE-SWAPPER'
 
-
 def pre_check() -> bool:
-    download_directory_path = resolve_relative_path('../models')
+    download_directory_path = resolve_relative_path('models')  # Đảm bảo đúng đường dẫn
     conditional_download(download_directory_path, ['https://huggingface.co/tuandung/inswapper/resolve/main/inswapper_128.onnx'])
     return True
-
 
 def pre_start() -> bool:
     if not is_image(roop.globals.source_path):
@@ -33,20 +31,16 @@ def pre_start() -> bool:
         return False
     return True
 
-
 def get_face_swapper() -> Any:
     global FACE_SWAPPER
 
-    with THREAD_LOCK:
-        if FACE_SWAPPER is None:
-            model_path = resolve_relative_path('../models/inswapper_128.onnx')
-            FACE_SWAPPER = insightface.model_zoo.get_model(model_path, providers=roop.globals.execution_providers)
+    if FACE_SWAPPER is None:
+        model_path = resolve_relative_path('models/inswapper_128.onnx')  # Đảm bảo đúng đường dẫn trong Colab
+        FACE_SWAPPER = insightface.model_zoo.get_model(model_path, providers=roop.globals.execution_providers)
     return FACE_SWAPPER
-
 
 def swap_face(source_face: Face, target_face: Face, temp_frame: Frame) -> Frame:
     return get_face_swapper().get(temp_frame, target_face, source_face, paste_back=True)
-
 
 def process_frame(source_face: Face, temp_frame: Frame) -> Frame:
     if roop.globals.many_faces:
@@ -60,20 +54,18 @@ def process_frame(source_face: Face, temp_frame: Frame) -> Frame:
             temp_frame = swap_face(source_face, target_face, temp_frame)
     return temp_frame
 
-
 def process_frames(source_path: str, temp_frame_paths: List[str], progress: Any = None) -> None:
     source_face = get_one_face(cv2.imread(source_path))
-    for temp_frame_path in temp_frame_paths:
-        temp_frame = cv2.imread(temp_frame_path)
-        try:
-            result = process_frame(source_face, temp_frame)
+    with ThreadPoolExecutor() as executor:
+        futures = []
+        for temp_frame_path in temp_frame_paths:
+            future = executor.submit(process_frame, source_face, cv2.imread(temp_frame_path))
+            futures.append(future)
+        for future in futures:
+            result = future.result()
             cv2.imwrite(temp_frame_path, result)
-        except Exception as exception:
-            print(exception)
-            pass
-        if progress:
-            progress.update(1)
-
+            if progress:
+                progress.update(1)
 
 def process_image(source_path: str, target_path: str, output_path: str) -> None:
     source_face = get_one_face(cv2.imread(source_path))
@@ -81,6 +73,6 @@ def process_image(source_path: str, target_path: str, output_path: str) -> None:
     result = process_frame(source_face, target_frame)
     cv2.imwrite(output_path, result)
 
-
 def process_video(source_path: str, temp_frame_paths: List[str]) -> None:
-    roop.processors.frame.core.process_video(source_path, temp_frame_paths, process_frames)
+    from roop.processors.frame.core import process_video
+    process_video(source_path, temp_frame_paths, process_frames)
